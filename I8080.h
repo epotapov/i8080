@@ -31,54 +31,24 @@ struct I8080 {
     ~I8080() = default;
 
     // Helpers
-    inline uint16_t getBC() {
-        return (b << 8) | c;
-    }
-    
-    inline uint16_t getDE() {
-        return (d << 8) | e;
-    }
-    
-    inline uint16_t getHL() {
-        return (h << 8) | l;
-    }
-    
-    inline void setBC(uint16_t value) {
-        b = value >> 8;
-        c = value & 0x00ff;
-    }
-    
-    inline void setDE(uint16_t value) {
-        d = value >> 8;
-        e = value & 0x00ff;
-    }
-    
-    inline void setHL(uint16_t value) {
-        h = value >> 8;
-        l = value & 0x00ff;
-    }
-    
-    inline uint8_t readMem(uint16_t addr) {
-        return memory[addr];
-    }
-
-    inline uint16_t readWord(uint16_t addr) {
-        return memory[addr] | (memory[addr + 1] << 8);
-    }
-    
-    inline void writeMem(uint16_t addr, uint8_t value) {
-        memory[addr] = value;
-    }
-
-    inline uint8_t increment(uint8_t value) {
-        //TODO
-        return 0;
-    }
-
-    inline void add(uint8_t* first, uint8_t* second) {
-        //TODO
-        return;
-    }
+    uint16_t getBC();
+    uint16_t getDE();
+    uint16_t getHL();
+    void setBC(uint16_t value);
+    void setDE(uint16_t value);
+    void setHL(uint16_t value);
+    uint8_t readMem(uint16_t addr);
+    uint16_t readWord(uint16_t addr);
+    void writeMem(uint16_t addr, uint8_t value);
+    bool checkParity(uint8_t value);
+    uint8_t increment(uint8_t value);
+    uint8_t decrement(uint8_t value);
+    void rlc();
+    void dad(uint16_t value);
+    void rrc();
+    void ral();
+    void rar();
+    void add(uint8_t val, bool cy);
 
 
     void readOpcode();
@@ -88,12 +58,125 @@ struct I8080 {
     uint8_t a = 0, b = 0, c = 0, d = 0,
             e = 0, h = 0, l = 0;
     uint8_t status = 0;
-    bool sign, zero, ac, parity, carry;
+    bool sign = false, zero = false, half = false,
+         parity = false, carry = false;
 
     uint8_t opcode = 0;
 
     std::array<uint8_t, MEMORY_SIZE> memory;
 
 };
+
+inline uint16_t I8080::getBC() {
+    return (b << 8) | c;
+}
+
+inline uint16_t I8080::getDE() {
+    return (d << 8) | e;
+}
+
+inline uint16_t I8080::getHL() {
+    return (h << 8) | l;
+}
+
+inline void I8080::setBC(uint16_t value) {
+    b = value >> 8;
+    c = value & 0x00ff;
+}
+
+inline void I8080::setDE(uint16_t value) {
+    d = value >> 8;
+    e = value & 0x00ff;
+}
+
+inline void I8080::setHL(uint16_t value) {
+    h = value >> 8;
+    l = value & 0x00ff;
+}
+
+inline uint8_t I8080::readMem(uint16_t addr) {
+    return memory[addr];
+}
+
+inline uint16_t I8080::readWord(uint16_t addr) {
+    return memory[addr] | (memory[addr + 1] << 8);
+}
+
+inline void I8080::writeMem(uint16_t addr, uint8_t value) {
+    memory[addr] = value;
+}
+
+inline bool I8080::checkParity(uint8_t value) {
+    uint8_t total = 0;
+    for (uint8_t i = 0; i < 8; ++i) {
+        total += ((value >> i) & 1);
+    }
+    return total % 2 == 0;
+}
+
+inline uint8_t I8080::increment(uint8_t value) {
+    uint8_t increment = value + 1;
+    half = (increment & 0xf) == 0;
+    zero = increment == 0;
+    sign = increment >> 7;
+    parity = checkParity(increment);
+    return increment;
+}
+
+inline uint8_t I8080::decrement(uint8_t value) {
+    uint8_t decrement = value - 1;
+    half = (decrement & 0xf) == 0xf;
+    zero = decrement == 0;
+    sign = decrement >> 7;
+    parity = checkParity(decrement);
+    return decrement;
+}
+
+inline void I8080::rlc() {
+    uint8_t prev = a;
+    carry = prev >> 7;
+    a <<= 1;
+    a |= carry;
+}
+
+inline void I8080::dad(uint16_t value) {
+    uint32_t result = (uint32_t) getHL() + (uint32_t) value;
+    setHL(result & 0xFFFF);
+    carry = result > 0xFFFF;
+}
+
+inline void I8080::rrc() {
+    uint8_t prev = a;
+    carry = prev & 0x1;
+    a >>= 1;
+    a |= (carry << 7);
+}
+
+inline void I8080::ral() {
+    uint8_t prev = a;
+    a <<= 1;
+    a |= carry;
+    carry = (prev >> 7);
+}
+
+inline void I8080::rar() {
+    uint8_t prev = a;
+    a >>= 1;
+    a |= (carry << 7);
+    carry = (prev & 0x1);
+}
+
+inline void I8080::add(uint8_t value, bool cy) {
+    uint8_t carry_in = (cy && carry) ? 1 : 0;
+    uint16_t result = (uint16_t) a + (uint16_t) value + carry_in;
+    half = ((a & 0x0F) + (value & 0x0F) + carry_in) > 0x0F;
+    carry = result > 0xFF;
+    a = (uint8_t) result & 0xff;
+    zero = a == 0;
+    sign = a >> 7;
+    parity = checkParity(a);
+}
+
+
 
 #endif
