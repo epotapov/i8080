@@ -49,6 +49,7 @@ struct I8080 {
     void ral();
     void rar();
     void add(uint8_t val, bool cy);
+    void sub(uint8_t val, bool cy);
 
 
     void readOpcode();
@@ -175,6 +176,17 @@ inline void I8080::add(uint8_t value, bool cy) {
     zero = a == 0;
     sign = a >> 7;
     parity = checkParity(a);
+}
+
+inline void I8080::sub(uint8_t value, bool cy) {
+    uint8_t prev = a;
+    uint8_t borrow_in = (cy && carry) ? 1 : 0;
+
+    carry = !borrow_in;
+    add((uint8_t) ~value, true);
+
+    carry = !carry;
+    half = (prev & 0x0F) < ((value & 0x0F) + borrow_in);
 }
 
 

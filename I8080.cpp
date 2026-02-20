@@ -218,6 +218,23 @@ void I8080::readOpcode() {
         case 0x8d: add(l, true); break;
         case 0x8e: add(readMem(getHL()), true); break;
         case 0x8f: add(a, true); break;
+        case 0x90: sub(b, false); break;
+        case 0x91: sub(c, false); break;
+        case 0x92: sub(d, false); break;
+        case 0x93: sub(e, false); break;
+        case 0x94: sub(h, false); break;
+        case 0x95: sub(l, false); break;
+        case 0x96: sub(readMem(getHL()), false); break;
+        case 0x97: sub(a, false); break;
+        case 0x98: sub(b, true); break;
+        case 0x99: sub(c, true); break;
+        case 0x9a: sub(d, true); break;
+        case 0x9b: sub(e, true); break;
+        case 0x9c: sub(h, true); break;
+        case 0x9d: sub(l, true); break;
+        case 0x9e: sub(readMem(getHL()), true); break;
+        case 0x9f: sub(a, true); break;
+        
     }
 
 
