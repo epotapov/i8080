@@ -234,6 +234,38 @@ void I8080::readOpcode() {
         case 0x9d: sub(l, true); break;
         case 0x9e: sub(readMem(getHL()), true); break;
         case 0x9f: sub(a, true); break;
+        case 0xa0: ana(b); break;
+        case 0xa1: ana(c); break;
+        case 0xa2: ana(d); break;
+        case 0xa3: ana(e); break;
+        case 0xa4: ana(h); break;
+        case 0xa5: ana(l); break;
+        case 0xa6: ana(readMem(getHL())); break;
+        case 0xa7: ana(a); break;
+        case 0xa8: xra(b); break;
+        case 0xa9: xra(c); break;
+        case 0xaa: xra(d); break;
+        case 0xab: xra(e); break;
+        case 0xac: xra(h); break;
+        case 0xad: xra(l); break;
+        case 0xae: xra(readMem(getHL())); break;
+        case 0xaf: xra(a); break;
+        case 0xb0: ora(b); break;
+        case 0xb1: ora(c); break;
+        case 0xb2: ora(d); break;
+        case 0xb3: ora(e); break;
+        case 0xb4: ora(h); break;
+        case 0xb5: ora(l); break;
+        case 0xb6: ora(readMem(getHL())); break;
+        case 0xb7: ora(a); break;
+        case 0xb8: cmp(b); break;
+        case 0xb9: cmp(c); break;
+        case 0xba: cmp(d); break;
+        case 0xbb: cmp(e); break;
+        case 0xbc: cmp(h); break;
+        case 0xbd: cmp(l); break;
+        case 0xbe: cmp(readMem(getHL())); break;
+        case 0xbf: cmp(a); break;
         
     }
 

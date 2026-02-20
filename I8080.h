@@ -48,8 +48,12 @@ struct I8080 {
     void rrc();
     void ral();
     void rar();
-    void add(uint8_t val, bool cy);
-    void sub(uint8_t val, bool cy);
+    void add(uint8_t value, bool cy);
+    void sub(uint8_t value, bool cy);
+    void ana(uint8_t value);
+    void xra(uint8_t value);
+    void ora(uint8_t value);
+    void cmp(uint8_t value);
 
 
     void readOpcode();
@@ -189,6 +193,36 @@ inline void I8080::sub(uint8_t value, bool cy) {
     half = (prev & 0x0F) < ((value & 0x0F) + borrow_in);
 }
 
+inline void I8080::ana(uint8_t value) {
+    uint8_t result = a & value;
+    carry = false;
+    half = ((a | value) & 0x08) != 0;
+    zero = a == 0;
+    sign = a >> 7;
+    parity = checkParity(a);
+    a = result;
+}
 
+inline void I8080::xra(uint8_t value) {
+    a ^= value;
+    carry = false;
+    half = false;
+    zero = a == 0;
+    sign = a >> 7;
+    parity = checkParity(a);
+}
+
+inline void I8080::ora(uint8_t value) {
+    a |= value;
+    carry = false;
+    half = false;
+    zero = a == 0;
+    sign = a >> 7;
+    parity = checkParity(a);
+}
+
+inline void I8080::cmp(uint8_t value) {
+    //TODO
+}
 
 #endif
