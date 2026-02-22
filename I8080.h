@@ -40,6 +40,7 @@ struct I8080 {
     uint8_t readMem(uint16_t addr);
     uint16_t readWord(uint16_t addr);
     void writeMem(uint16_t addr, uint8_t value);
+    void writeWord(uint16_t addr, uint16_t value);
     bool checkParity(uint8_t value);
     uint8_t increment(uint8_t value);
     uint8_t decrement(uint8_t value);
@@ -54,6 +55,10 @@ struct I8080 {
     void xra(uint8_t value);
     void ora(uint8_t value);
     void cmp(uint8_t value);
+    uint16_t pop();
+    void push(uint16_t value);
+    void ret();
+    void retIf(bool condition);
 
 
     void readOpcode();
@@ -109,6 +114,11 @@ inline uint16_t I8080::readWord(uint16_t addr) {
 
 inline void I8080::writeMem(uint16_t addr, uint8_t value) {
     memory[addr] = value;
+}
+
+inline void I8080::writeWord(uint16_t addr, uint16_t value) {
+    memory[addr] = value & 0xff;
+    memory[(uint16_t) (addr + 1)] = value >> 8;
 }
 
 inline bool I8080::checkParity(uint8_t value) {
@@ -196,7 +206,7 @@ inline void I8080::sub(uint8_t value, bool cy) {
 inline void I8080::ana(uint8_t value) {
     uint8_t result = a & value;
     carry = false;
-    half = ((a | value) & 0x08) != 0;
+    half = ((a | value) & 0x08) != 0; // maybe clear
     zero = a == 0;
     sign = a >> 7;
     parity = checkParity(a);
@@ -222,7 +232,34 @@ inline void I8080::ora(uint8_t value) {
 }
 
 inline void I8080::cmp(uint8_t value) {
-    //TODO
+    uint8_t result = a - value;
+    carry = a < value;
+    half = (a & 0x0F) < (value & 0x0F);
+    zero = result == 0;
+    sign = result >> 7;
+    parity = checkParity(result);
+}
+
+inline uint16_t I8080::pop() {
+    uint16_t word = readWord(sp);
+    sp += 2;
+    return word;
+}
+
+inline void I8080::push(uint16_t value) {
+    sp -= 2;
+    writeWord(sp, value);
+}
+
+inline void I8080::ret() {
+    pc = pop();
+}
+
+inline void I8080::retIf(bool condition) {
+    if (condition) {
+        ret();
+        // Cycle
+    }
 }
 
 #endif

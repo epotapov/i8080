@@ -266,7 +266,8 @@ void I8080::readOpcode() {
         case 0xbd: cmp(l); break;
         case 0xbe: cmp(readMem(getHL())); break;
         case 0xbf: cmp(a); break;
-        
+        case 0xc0: retIf(zero == false); break;
+        case 0xc1: setBC(pop()); break;
     }
 
 
