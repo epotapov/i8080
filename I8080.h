@@ -59,6 +59,9 @@ struct I8080 {
     void push(uint16_t value);
     void ret();
     void retIf(bool condition);
+    void jmp(bool condition);
+    void call(uint16_t addr);
+    void call(bool condition);
 
 
     void readOpcode();
@@ -259,6 +262,28 @@ inline void I8080::retIf(bool condition) {
     if (condition) {
         ret();
         // Cycle
+    }
+}
+
+inline void I8080::jmp(bool condition) {
+    uint16_t addr = readWord(pc);
+    pc += 2;
+    if (condition) {
+        pc = addr;
+    }
+}
+
+inline void I8080::call(uint16_t addr) {
+    push(pc);
+    pc = addr;
+}
+
+inline void I8080::call(bool condition) {
+    uint16_t addr = readWord(pc);
+    pc += 2;
+    if (condition) {
+        call(addr);
+        // cycle
     }
 }
 

@@ -268,6 +268,62 @@ void I8080::readOpcode() {
         case 0xbf: cmp(a); break;
         case 0xc0: retIf(zero == false); break;
         case 0xc1: setBC(pop()); break;
+        case 0xc2: jmp(zero == false); break;
+        case 0xc3: jmp(true); break;
+        case 0xc4: call(zero == false); break;
+        case 0xc5: push(getBC()); break;
+        case 0xc6: {
+            uint8_t value = readMem(pc);
+            pc++;
+            add(value, false);
+            break;
+        }
+        case 0xc7: call((uint16_t) 0x00); break;
+        case 0xc8: retIf(zero == true); break;
+        case 0xc9: ret(); break;
+        case 0xca: jmp(zero == true); break;
+        case 0xcb: break;
+        case 0xcc: call(zero == true); break;
+        case 0xcd: {
+            uint16_t addr = readWord(pc);
+            pc += 2;
+            call(addr);
+            break;
+        }
+        case 0xce: {
+            uint8_t value = readMem(pc);
+            pc++;
+            add(value, true);
+            break;
+        }
+        case 0xcf: call((uint16_t) 0x08); break;
+        case 0xd0: retIf(carry == false); break;
+        case 0xd1: setDE(pop()); break;
+        case 0xd2: jmp(carry == false); break;
+        case 0xd3: break; //TODO
+        case 0xd4: call(carry == false); break;
+        case 0xd5: push(getDE()); break;
+        case 0xd6: {
+            uint8_t value = readMem(pc);
+            pc++;
+            sub(value, false);
+            break;
+        }
+        case 0xd7: call((uint16_t) 0x10); break;
+        case 0xd8: retIf(carry == true); break;
+        case 0xd9: break;
+        case 0xda: jmp(carry == true); break;
+        case 0xdb: break; //TODO
+        case 0xdc: call(carry == true); break;
+        case 0xdd: break;
+        case 0xde: {
+            uint8_t value = readMem(pc);
+            pc++;
+            sub(value, true);
+            break;
+        }
+        case 0xdf: call((uint16_t) 0x18); break;
+
     }
 
 
