@@ -278,7 +278,7 @@ void I8080::readOpcode() {
             add(value, false);
             break;
         }
-        case 0xc7: call((uint16_t) 0x00); break;
+        case 0xc7: call(static_cast<uint16_t>(0x00)); break;
         case 0xc8: retIf(zero == true); break;
         case 0xc9: ret(); break;
         case 0xca: jmp(zero == true); break;
@@ -296,7 +296,7 @@ void I8080::readOpcode() {
             add(value, true);
             break;
         }
-        case 0xcf: call((uint16_t) 0x08); break;
+        case 0xcf: call(static_cast<uint16_t>(0x08)); break;
         case 0xd0: retIf(carry == false); break;
         case 0xd1: setDE(pop()); break;
         case 0xd2: jmp(carry == false); break;
@@ -309,7 +309,7 @@ void I8080::readOpcode() {
             sub(value, false);
             break;
         }
-        case 0xd7: call((uint16_t) 0x10); break;
+        case 0xd7: call(static_cast<uint16_t>(0x10)); break;
         case 0xd8: retIf(carry == true); break;
         case 0xd9: break;
         case 0xda: jmp(carry == true); break;
@@ -322,8 +322,91 @@ void I8080::readOpcode() {
             sub(value, true);
             break;
         }
-        case 0xdf: call((uint16_t) 0x18); break;
+        case 0xdf: call(static_cast<uint16_t>(0x18)); break;
+        case 0xe0: retIf(parity == false); break;
+        case 0xe1: setHL(pop()); break;
+        case 0xe2: jmp(parity == false); break;
+        case 0xe3: {
+            uint16_t value = readWord(sp);
+            writeWord(sp, getHL());
+            setHL(value);
+            break;
+        }
+        case 0xe4: call(parity == false); break;
+        case 0xe5: push(getHL()); break;
+        case 0xe6: {
+            uint8_t value = readMem(pc);
+            pc++;
+            ana(value);
+            break;
+        }
+        case 0xe7: call(static_cast<uint16_t>(0x20)); break;
+        case 0xe8: retIf(parity == true); break;
+        case 0xe9: pc = getHL(); break;
+        case 0xea: jmp(parity == true); break;
+        case 0xeb: {
+            uint16_t hl = getHL();
+            setHL(getDE());
+            setDE(hl);
+            break;
+        }
+        case 0xec: call(parity == true); break;
+        case 0xed: break;
+        case 0xee: {
+            uint8_t value = readMem(pc);
+            pc++;
+            xra(value);
+            break;
+        }
+        case 0xef: call(static_cast<uint16_t>(0x28)); break;
+        case 0xf0: retIf(sign == false); break;
+        case 0xf1: {
+            uint16_t popped = pop();
+            a = popped >> 8;
+            uint8_t psw = popped & 0xff;
 
+            sign = (psw >> 7) & 0x1;
+            zero = (psw >> 6) & 0x1;
+            half = (psw >> 4) & 0x1;
+            parity = (psw >> 2) & 0x1;
+            carry = psw & 0x1;
+            break;
+        }
+        case 0xf2: jmp(sign == false); break;
+        case 0xf3: break; //TODO
+        case 0xf4: call(sign == false); break;
+        case 0xf5: {
+            uint16_t psw = 0;
+            psw |= sign << 7;
+            psw |= zero << 6;
+            psw |= half << 4;
+            psw |= parity << 2;
+            psw |= 1 << 1;
+            psw |= carry;
+            psw |= a << 8;
+            push(psw);
+            break;
+        }
+        case 0xf6: {
+            uint8_t value = readMem(pc);
+            pc++;
+            ora(value);
+            break;
+        }
+        case 0xf7: call(static_cast<uint16_t>(0x30)); break;
+        case 0xf8: retIf(sign == true); break;
+        case 0xf9: sp = getHL(); break;
+        case 0xfa: jmp(sign == true); break;
+        case 0xfb: break; //TODO
+        case 0xfc: call(sign == true); break;
+        case 0xfd: break;
+        case 0xfe: {
+            uint8_t value = readMem(pc);
+            pc++;
+            cmp(value);
+            break;
+        }
+        case 0xff: call(static_cast<uint16_t>(0x38)); break;
     }
 
 

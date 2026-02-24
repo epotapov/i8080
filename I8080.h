@@ -121,7 +121,7 @@ inline void I8080::writeMem(uint16_t addr, uint8_t value) {
 
 inline void I8080::writeWord(uint16_t addr, uint16_t value) {
     memory[addr] = value & 0xff;
-    memory[(uint16_t) (addr + 1)] = value >> 8;
+    memory[static_cast<uint16_t>(addr + 1)] = value >> 8;
 }
 
 inline bool I8080::checkParity(uint8_t value) {
@@ -158,7 +158,7 @@ inline void I8080::rlc() {
 }
 
 inline void I8080::dad(uint16_t value) {
-    uint32_t result = (uint32_t) getHL() + (uint32_t) value;
+    uint32_t result = static_cast<uint32_t>(getHL()) + static_cast<uint32_t>(value);
     setHL(result & 0xFFFF);
     carry = result > 0xFFFF;
 }
@@ -186,10 +186,10 @@ inline void I8080::rar() {
 
 inline void I8080::add(uint8_t value, bool cy) {
     uint8_t carry_in = (cy && carry) ? 1 : 0;
-    uint16_t result = (uint16_t) a + (uint16_t) value + carry_in;
+    uint16_t result = static_cast<uint16_t>(a) + static_cast<uint16_t>(value) + carry_in;
     half = ((a & 0x0F) + (value & 0x0F) + carry_in) > 0x0F;
     carry = result > 0xFF;
-    a = (uint8_t) result & 0xff;
+    a = static_cast<uint8_t>(result) & 0xff;
     zero = a == 0;
     sign = a >> 7;
     parity = checkParity(a);
@@ -200,7 +200,7 @@ inline void I8080::sub(uint8_t value, bool cy) {
     uint8_t borrow_in = (cy && carry) ? 1 : 0;
 
     carry = !borrow_in;
-    add((uint8_t) ~value, true);
+    add(static_cast<uint8_t>(~value), true);
 
     carry = !carry;
     half = (prev & 0x0F) < ((value & 0x0F) + borrow_in);
