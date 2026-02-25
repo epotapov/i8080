@@ -1,12 +1,36 @@
+#include <fstream>
+
 #include "I8080.h"
 
-I8080::I8080() {
-    
+I8080::I8080(uint32_t mSize, uint16_t memStart, const char* fileName) 
+    : memSize(mSize) {
+    memory = new uint8_t[memSize];
+
+    std::ifstream file(fileName, std::ios::binary | std::ios::in | std::ios::ate);
+
+    if (file.is_open()) {
+        std::streampos size = file.tellg();
+
+        char* buffer = new char[size];
+
+        file.seekg(0, std::ios::beg);
+        file.read(buffer, size);
+        file.close();
+
+
+        for (int i = 0; i < size; ++i) {
+            memory[memStart + i] = buffer[i];
+        }
+
+        delete [] buffer;
+    }
 }
 
-void I8080::readOpcode() {
-    uint8_t opcode = readMem(pc);
-    pc++;
+I8080::~I8080() {
+    delete [] memory;
+}
+
+void I8080::execOpcode(uint8_t opcode) {
 
     switch (opcode) {
         case 0x00: break;
@@ -192,7 +216,7 @@ void I8080::readOpcode() {
         case 0x73: writeMem(getHL(), e); break;
         case 0x74: writeMem(getHL(), h); break;
         case 0x75: writeMem(getHL(), l); break;
-        case 0x76: break; //HLT
+        case 0x76: hlt = true; break; //HLT
         case 0x77: writeMem(getHL(), a); break;
         case 0x78: a = b; break;
         case 0x79: a = c; break;
@@ -300,7 +324,12 @@ void I8080::readOpcode() {
         case 0xd0: retIf(carry == false); break;
         case 0xd1: setDE(pop()); break;
         case 0xd2: jmp(carry == false); break;
-        case 0xd3: break; //TODO
+        case 0xd3: { // TODO OUT
+            uint8_t port = readMem(pc);
+            pc++;
+            (void)port;
+            break;
+        }
         case 0xd4: call(carry == false); break;
         case 0xd5: push(getDE()); break;
         case 0xd6: {
@@ -313,7 +342,13 @@ void I8080::readOpcode() {
         case 0xd8: retIf(carry == true); break;
         case 0xd9: break;
         case 0xda: jmp(carry == true); break;
-        case 0xdb: break; //TODO
+        case 0xdb: { // TODO IN
+            uint8_t port = readMem(pc);
+            pc++;
+            (void)port;
+            a = 0x00;
+            break;
+        }
         case 0xdc: call(carry == true); break;
         case 0xdd: break;
         case 0xde: {
@@ -373,7 +408,10 @@ void I8080::readOpcode() {
             break;
         }
         case 0xf2: jmp(sign == false); break;
-        case 0xf3: break; //TODO
+        case 0xf3:
+            interrupt = false;
+            interruptNext = false;
+            break;
         case 0xf4: call(sign == false); break;
         case 0xf5: {
             uint16_t psw = 0;
@@ -397,7 +435,7 @@ void I8080::readOpcode() {
         case 0xf8: retIf(sign == true); break;
         case 0xf9: sp = getHL(); break;
         case 0xfa: jmp(sign == true); break;
-        case 0xfb: break; //TODO
+        case 0xfb: interruptNext = true; break;
         case 0xfc: call(sign == true); break;
         case 0xfd: break;
         case 0xfe: {
@@ -408,8 +446,29 @@ void I8080::readOpcode() {
         }
         case 0xff: call(static_cast<uint16_t>(0x38)); break;
     }
+}
 
+void I8080::nextInstruction() {
+    bool executedInstruction = false;
 
+    if (interrupt && interruptPending && interruptNext == false) {
+        interruptPending = false;
+        interrupt = false;
+        hlt = false;
+        execOpcode(interruptOpcode);
+        executedInstruction = true;
+    }
+    else if (!hlt) {
+        uint8_t opcode = readMem(pc);
+        pc++;
+        execOpcode(opcode);
+        executedInstruction = true;
+    }
+
+    if (executedInstruction && interruptNext) {
+        interrupt = true;
+        interruptNext = false;
+    }
 }
 
 int main(int argc, char** argv) {

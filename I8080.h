@@ -27,8 +27,8 @@ static const uint8_t OPCODES_CYCLES[256] = {
 };
 
 struct I8080 {
-    I8080();
-    ~I8080() = default;
+    I8080(uint32_t mSize, uint16_t memStart, const char* fileName);
+    ~I8080();
 
     // Helpers
     uint16_t getBC();
@@ -62,9 +62,10 @@ struct I8080 {
     void jmp(bool condition);
     void call(uint16_t addr);
     void call(bool condition);
-
-
-    void readOpcode();
+    void requestInterrupt(uint8_t opcode);
+    
+    void execOpcode(uint8_t opcode);
+    void nextInstruction();
 
     uint16_t sp = 0;
     uint16_t pc = 0;
@@ -73,11 +74,16 @@ struct I8080 {
     uint8_t status = 0;
     bool sign = false, zero = false, half = false,
          parity = false, carry = false;
+    bool hlt = false;
+    bool interrupt = false;
+    bool interruptNext = false;
+    bool interruptPending = false;
+    uint8_t interruptOpcode = 0;
 
     uint8_t opcode = 0;
 
-    std::array<uint8_t, MEMORY_SIZE> memory;
-
+    uint32_t memSize;
+    uint8_t* memory;
 };
 
 inline uint16_t I8080::getBC() {
@@ -285,6 +291,11 @@ inline void I8080::call(bool condition) {
         call(addr);
         // cycle
     }
+}
+
+inline void I8080::requestInterrupt(uint8_t opcode) {
+    interruptPending = true;
+    interruptOpcode = opcode;
 }
 
 #endif
