@@ -1,28 +1,26 @@
 #include <fstream>
+#include <iostream>
 
 #include "I8080.h"
 
 I8080::I8080(uint32_t mSize, uint16_t memStart, const char* fileName) 
     : memSize(mSize) {
     memory = new uint8_t[memSize];
+    std::fill_n(memory, memSize, 0);
 
     std::ifstream file(fileName, std::ios::binary | std::ios::in | std::ios::ate);
 
     if (file.is_open()) {
         std::streampos size = file.tellg();
 
-        char* buffer = new char[size];
+        if (size > 0 && memStart < memSize) {
+            uint32_t available = memSize - memStart;
+            uint32_t toRead = std::min<uint32_t>(available, static_cast<uint32_t>(size));
 
-        file.seekg(0, std::ios::beg);
-        file.read(buffer, size);
-        file.close();
-
-
-        for (int i = 0; i < size; ++i) {
-            memory[memStart + i] = buffer[i];
+            file.seekg(0, std::ios::beg);
+            file.read(reinterpret_cast<char *>(memory + memStart), static_cast<std::streamsize>(toRead));
         }
-
-        delete [] buffer;
+        file.close();
     }
 }
 
@@ -102,7 +100,26 @@ void I8080::execOpcode(uint8_t opcode) {
             h = readMem(pc);
             pc++;
             break;
-        case 0x27: break; //TODO
+        case 0x27: {
+            bool cry = carry;
+            uint8_t addition = 0;
+            uint8_t top = a >> 4;
+            uint8_t bottom = a & 0xf;
+
+            if (half || bottom > 9) {
+                addition += 0x06;
+            }
+
+            if (carry || top > 9 || (top >= 9 && bottom > 9)) {
+                addition += 0x60;
+                cry = true;
+            }
+
+            add(addition, 0);
+
+            carry = cry;
+            break;
+        }
         case 0x28: break;
         case 0x29: dad(getHL()); break;
         case 0x2a: {
@@ -327,7 +344,22 @@ void I8080::execOpcode(uint8_t opcode) {
         case 0xd3: { // TODO OUT
             uint8_t port = readMem(pc);
             pc++;
-            (void)port;
+            if (port == 0) {
+                test_end = true;
+            }
+            else if (port == 1) {
+                if (c == 2) {
+                    std::cout << static_cast<char>(e);
+                }
+                else if (c == 9) {
+                    uint16_t addr = getDE();
+                    char ch = readMem(addr);
+                    while (ch != '$') {
+                        std::cout << ch;
+                        ch = readMem(++addr);
+                    }
+                }
+            }
             break;
         }
         case 0xd4: call(carry == false); break;
@@ -345,8 +377,6 @@ void I8080::execOpcode(uint8_t opcode) {
         case 0xdb: { // TODO IN
             uint8_t port = readMem(pc);
             pc++;
-            (void)port;
-            a = 0x00;
             break;
         }
         case 0xdc: call(carry == true); break;
@@ -455,12 +485,14 @@ void I8080::nextInstruction() {
         interruptPending = false;
         interrupt = false;
         hlt = false;
+        cycle += OPCODES_CYCLES[interruptOpcode];
         execOpcode(interruptOpcode);
         executedInstruction = true;
     }
     else if (!hlt) {
         uint8_t opcode = readMem(pc);
         pc++;
+        cycle += OPCODES_CYCLES[opcode];
         execOpcode(opcode);
         executedInstruction = true;
     }
@@ -469,8 +501,4 @@ void I8080::nextInstruction() {
         interrupt = true;
         interruptNext = false;
     }
-}
-
-int main(int argc, char** argv) {
-    return 0;
 }

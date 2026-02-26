@@ -1,7 +1,7 @@
-XX = g++
+CXX = g++
 CXXFLAGS = -std=c++17 -g
 TARGET = I8080
-SRCS = I8080.cpp
+SRCS = I8080.cpp run_test.cpp
 OBJS = $(SRCS:.cpp=.o)
 BUILD = build/
 

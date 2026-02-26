@@ -84,6 +84,11 @@ struct I8080 {
 
     uint32_t memSize;
     uint8_t* memory;
+
+    uint64_t cycle = 0;
+
+    //Testing
+    bool test_end = false;
 };
 
 inline uint16_t I8080::getBC() {
@@ -118,7 +123,7 @@ inline uint8_t I8080::readMem(uint16_t addr) {
 }
 
 inline uint16_t I8080::readWord(uint16_t addr) {
-    return memory[addr] | (memory[addr + 1] << 8);
+    return memory[addr] | (memory[static_cast<uint16_t>(addr + 1)] << 8);
 }
 
 inline void I8080::writeMem(uint16_t addr, uint8_t value) {
@@ -216,9 +221,9 @@ inline void I8080::ana(uint8_t value) {
     uint8_t result = a & value;
     carry = false;
     half = ((a | value) & 0x08) != 0; // maybe clear
-    zero = a == 0;
-    sign = a >> 7;
-    parity = checkParity(a);
+    zero = result == 0;
+    sign = result >> 7;
+    parity = checkParity(result);
     a = result;
 }
 
@@ -267,7 +272,7 @@ inline void I8080::ret() {
 inline void I8080::retIf(bool condition) {
     if (condition) {
         ret();
-        // Cycle
+        cycle += 6;
     }
 }
 
@@ -289,7 +294,7 @@ inline void I8080::call(bool condition) {
     pc += 2;
     if (condition) {
         call(addr);
-        // cycle
+        cycle += 6;
     }
 }
 
