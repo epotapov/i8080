@@ -323,7 +323,7 @@ void I8080::execOpcode(uint8_t opcode) {
         case 0xc8: retIf(zero == true); break;
         case 0xc9: ret(); break;
         case 0xca: jmp(zero == true); break;
-        case 0xcb: break;
+        case 0xcb: jmp(true); break;
         case 0xcc: call(zero == true); break;
         case 0xcd: {
             uint16_t addr = readWord(pc);
@@ -372,7 +372,7 @@ void I8080::execOpcode(uint8_t opcode) {
         }
         case 0xd7: call(static_cast<uint16_t>(0x10)); break;
         case 0xd8: retIf(carry == true); break;
-        case 0xd9: break;
+        case 0xd9: ret(); break;
         case 0xda: jmp(carry == true); break;
         case 0xdb: { // TODO IN
             uint8_t port = readMem(pc);
@@ -380,7 +380,12 @@ void I8080::execOpcode(uint8_t opcode) {
             break;
         }
         case 0xdc: call(carry == true); break;
-        case 0xdd: break;
+        case 0xdd: {
+            uint16_t addr = readWord(pc);
+            pc += 2;
+            call(addr);
+            break;
+        }
         case 0xde: {
             uint8_t value = readMem(pc);
             pc++;
@@ -416,7 +421,12 @@ void I8080::execOpcode(uint8_t opcode) {
             break;
         }
         case 0xec: call(parity == true); break;
-        case 0xed: break;
+        case 0xed: {
+            uint16_t addr = readWord(pc);
+            pc += 2;
+            call(addr);
+            break;
+        }
         case 0xee: {
             uint8_t value = readMem(pc);
             pc++;
@@ -467,7 +477,12 @@ void I8080::execOpcode(uint8_t opcode) {
         case 0xfa: jmp(sign == true); break;
         case 0xfb: interruptNext = true; break;
         case 0xfc: call(sign == true); break;
-        case 0xfd: break;
+        case 0xfd: {
+            uint16_t addr = readWord(pc);
+            pc += 2;
+            call(addr);
+            break;
+        }
         case 0xfe: {
             uint8_t value = readMem(pc);
             pc++;

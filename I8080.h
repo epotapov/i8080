@@ -154,7 +154,7 @@ inline uint8_t I8080::increment(uint8_t value) {
 
 inline uint8_t I8080::decrement(uint8_t value) {
     uint8_t decrement = value - 1;
-    half = (decrement & 0xf) == 0xf;
+    half = (decrement & 0xf) != 0xf;
     zero = decrement == 0;
     sign = decrement >> 7;
     parity = checkParity(decrement);
@@ -207,14 +207,12 @@ inline void I8080::add(uint8_t value, bool cy) {
 }
 
 inline void I8080::sub(uint8_t value, bool cy) {
-    uint8_t prev = a;
     uint8_t borrow_in = (cy && carry) ? 1 : 0;
 
     carry = !borrow_in;
     add(static_cast<uint8_t>(~value), true);
 
     carry = !carry;
-    half = (prev & 0x0F) < ((value & 0x0F) + borrow_in);
 }
 
 inline void I8080::ana(uint8_t value) {
@@ -246,12 +244,13 @@ inline void I8080::ora(uint8_t value) {
 }
 
 inline void I8080::cmp(uint8_t value) {
-    uint8_t result = a - value;
-    carry = a < value;
-    half = (a & 0x0F) < (value & 0x0F);
-    zero = result == 0;
-    sign = result >> 7;
-    parity = checkParity(result);
+    int16_t result = static_cast<int16_t>(a) - static_cast<int16_t>(value);
+    carry = ((result >> 8) & 0x1) != 0;
+    half = ((~(a ^ result ^ value)) & 0x10) != 0;
+    uint8_t resultFinal = static_cast<uint8_t>(result & 0xFF);
+    zero = resultFinal == 0;
+    sign = resultFinal >> 7;
+    parity = checkParity(resultFinal);
 }
 
 inline uint16_t I8080::pop() {
