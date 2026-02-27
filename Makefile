@@ -1,22 +1,34 @@
 CXX = g++
 CXXFLAGS = -std=c++17 -g
 TARGET = I8080
-SRCS = I8080.cpp run_test.cpp
-OBJS = $(SRCS:.cpp=.o)
+SPACETARGET = space-invaders
 BUILD = build/
 
-all: $(BUILD) $(TARGET)
+TEST_OBJS = $(BUILD)I8080.o $(BUILD)run_test.o
+SPACE_OBJS = $(BUILD)I8080.o $(BUILD)space-invaders.o
+
+all: test
+
+test: $(BUILD)$(TARGET)
+
+space: $(BUILD)$(SPACETARGET)
 
 $(BUILD):
 	mkdir -p $(BUILD)
 
-$(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $(BUILD)$@ $(OBJS:%=$(BUILD)%)
+$(BUILD)$(TARGET): $(TEST_OBJS)
+	$(CXX) $(CXXFLAGS) -o $@ $(TEST_OBJS)
 
-%.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $(BUILD)$@
+$(BUILD)$(SPACETARGET): $(SPACE_OBJS)
+	$(CXX) $(CXXFLAGS) -o $@ $(SPACE_OBJS)
+
+$(BUILD)%.o: %.cpp | $(BUILD)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(BUILD)space-invaders.o: space-invaders/space-invaders.cpp | $(BUILD)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
 	rm -rf $(BUILD)
 
-.PHONY: all clean
+.PHONY: all test space clean

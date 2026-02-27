@@ -25,8 +25,8 @@ void run_test(const char * file, uint64_t expected) {
 
 int main(int argc, char** argv) {
     // run_test("test/TST8080.COM", 4924LU);
-    // run_test("test/CPUTEST.COM", 255653383LU);
+    run_test("test/CPUTEST.COM", 255653383LU);
     // run_test("test/8080PRE.COM", 7817LU);
-    run_test("test/8080EXM.COM", 23803381171LU);
+    // run_test("test/8080EXM.COM", 23803381171LU);
     return 0;
 }
