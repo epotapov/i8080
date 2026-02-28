@@ -341,25 +341,10 @@ void I8080::execOpcode(uint8_t opcode) {
         case 0xd0: retIf(carry == false); break;
         case 0xd1: setDE(pop()); break;
         case 0xd2: jmp(carry == false); break;
-        case 0xd3: { // TODO OUT
+        case 0xd3: { // OUT
             uint8_t port = readMem(pc);
             pc++;
-            if (port == 0) {
-                test_end = true;
-            }
-            else if (port == 1) {
-                if (c == 2) {
-                    std::cout << static_cast<char>(e);
-                }
-                else if (c == 9) {
-                    uint16_t addr = getDE();
-                    char ch = readMem(addr);
-                    while (ch != '$') {
-                        std::cout << ch;
-                        ch = readMem(++addr);
-                    }
-                }
-            }
+            outPort(this, port);
             break;
         }
         case 0xd4: call(carry == false); break;
@@ -374,9 +359,10 @@ void I8080::execOpcode(uint8_t opcode) {
         case 0xd8: retIf(carry == true); break;
         case 0xd9: ret(); break;
         case 0xda: jmp(carry == true); break;
-        case 0xdb: { // TODO IN
+        case 0xdb: { // IN
             uint8_t port = readMem(pc);
             pc++;
+            inPort(this, port);
             break;
         }
         case 0xdc: call(carry == true); break;

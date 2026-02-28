@@ -62,6 +62,10 @@ struct I8080 {
     void jmp(bool condition);
     void call(uint16_t addr);
     void call(bool condition);
+    void (*inPort) (I8080*, uint8_t);
+    void (*outPort) (I8080*, uint8_t);
+    void setPorts(void (*in) (I8080*, uint8_t), void (*out) (I8080*, uint8_t));
+
     void requestInterrupt(uint8_t opcode);
     
     void execOpcode(uint8_t opcode);
@@ -86,9 +90,6 @@ struct I8080 {
     uint8_t* memory;
 
     uint64_t cycle = 0;
-
-    //Testing
-    bool test_end = false;
 };
 
 inline uint16_t I8080::getBC() {
@@ -300,6 +301,11 @@ inline void I8080::call(bool condition) {
 inline void I8080::requestInterrupt(uint8_t opcode) {
     interruptPending = true;
     interruptOpcode = opcode;
+}
+
+inline void I8080::setPorts(void (*in) (I8080*, uint8_t), void (*out) (I8080*, uint8_t)) {
+    inPort = in;
+    outPort = out;
 }
 
 #endif

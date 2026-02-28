@@ -4,8 +4,34 @@
 
 #define MEMORY_SIZE 0x10000
 
+static bool test_end = false;
+
+void out_port(I8080 *i8080, uint8_t port) {
+    if (port == 0) {
+        test_end = true;
+    }
+    else if (port == 1) {
+        if (i8080->c == 2) {
+            std::cout << static_cast<char>(i8080->e);
+        }
+        else if (i8080->c == 9) {
+            uint16_t addr = i8080->getDE();
+            char ch = i8080->readMem(addr);
+            while (ch != '$') {
+                std::cout << ch;
+                ch = i8080->readMem(++addr);
+            }
+        }
+    }
+}
+
+void in_port(I8080 *i8080, uint8_t port) {
+    return;
+}
+
 void run_test(const char * file, uint64_t expected) {
     I8080 i8080(MEMORY_SIZE, 0x100, file);
+    i8080.setPorts(in_port, out_port);
     i8080.memory[0x0000] = 0xD3;
     i8080.memory[0x0001] = 0x00;
     i8080.memory[0x0005] = 0xD3;
@@ -13,7 +39,7 @@ void run_test(const char * file, uint64_t expected) {
     i8080.memory[0x0007] = 0xC9;
     i8080.pc = 0x100;
     uint32_t total_inst = 0;
-    while (!i8080.test_end) {
+    while (!test_end) {
         total_inst++;
         i8080.nextInstruction();
     }
@@ -21,12 +47,13 @@ void run_test(const char * file, uint64_t expected) {
     std::cout << std::endl << std::endl << "Test results" << std::endl;
     std::cout << "Expected cycles: " << expected << std::endl;
     std::cout << "Ran cycles: " << i8080.cycle << std::endl;
+    test_end = false;
 }
 
 int main(int argc, char** argv) {
-    // run_test("test/TST8080.COM", 4924LU);
+    run_test("test/TST8080.COM", 4924LU);
     run_test("test/CPUTEST.COM", 255653383LU);
-    // run_test("test/8080PRE.COM", 7817LU);
-    // run_test("test/8080EXM.COM", 23803381171LU);
+    run_test("test/8080PRE.COM", 7817LU);
+    run_test("test/8080EXM.COM", 23803381171LU);
     return 0;
 }
