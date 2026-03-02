@@ -14,9 +14,6 @@ static constexpr uint8_t PORT_SWITCHES = 0xFF;
 static constexpr uint8_t SWITCH_BOOT_VALUE = 0b00100010;
 
 void out_port(I8080 *i8080, uint8_t port) {
-    if (port != PORT_DATA_A && port != PORT_DATA_B) {
-        return;
-    }
 
     uint8_t ch = i8080->a;
 
@@ -29,7 +26,7 @@ void in_port(I8080 *i8080, uint8_t port) {
         return;
     }
 
-    if (port == PORT_STATUS_A || port == PORT_STATUS_B) {
+    if (port == PORT_STATUS_A) {
         i8080->a = 0x02;
         return;
     }
