@@ -14,7 +14,6 @@ static constexpr uint8_t PORT_SWITCHES = 0xFF;
 static constexpr uint8_t SWITCH_BOOT_VALUE = 0b00100010;
 
 void out_port(I8080 *i8080, uint8_t port) {
-
     uint8_t ch = i8080->a;
 
     std::cout << static_cast<char>(ch);

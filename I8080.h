@@ -4,8 +4,6 @@
 #include <cstdint>
 #include <array>
 
-#define MEMORY_SIZE 0x10000
-
 static const uint8_t OPCODES_CYCLES[256] = {
 //  0  1   2   3   4   5   6   7   8  9   A   B   C   D   E  F
     4, 10, 7,  5,  5,  5,  7,  4,  4, 10, 7,  5,  5,  5,  7, 4,  // 0
@@ -29,6 +27,7 @@ static const uint8_t OPCODES_CYCLES[256] = {
 struct I8080 {
     I8080(uint32_t mSize, uint16_t memStart, const char* fileName);
     ~I8080();
+    void writeRom(uint16_t memStart, const char* fileName);
 
     // Helpers
     uint16_t getBC();

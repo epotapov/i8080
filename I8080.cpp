@@ -503,3 +503,20 @@ void I8080::nextInstruction() {
         interruptNext = false;
     }
 }
+
+void I8080::writeRom(uint16_t memStart, const char* fileName) {
+    std::ifstream file(fileName, std::ios::binary | std::ios::in | std::ios::ate);
+
+    if (file.is_open()) {
+        std::streampos size = file.tellg();
+
+        if (size > 0 && memStart < memSize) {
+            uint32_t available = memSize - memStart;
+            uint32_t toRead = std::min<uint32_t>(available, static_cast<uint32_t>(size));
+
+            file.seekg(0, std::ios::beg);
+            file.read(reinterpret_cast<char *>(memory + memStart), static_cast<std::streamsize>(toRead));
+        }
+        file.close();
+    }
+}
