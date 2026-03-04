@@ -22,8 +22,11 @@ struct Space {
     void inPort(I8080* i8080, uint8_t port);
     void outPort(I8080* i8080, uint8_t port);
 
+    uint16_t shiftWord = 0;
+    uint8_t shiftOffset = 0;
+    uint8_t port1 = 0, port2 = 0;
     uint8_t display[DISPLAY_HEIGHT][DISPLAY_WIDTH] = {0};
-    I8080* i8080;
+    I8080* i8080 = nullptr;
 };
 
 #endif
