@@ -344,7 +344,9 @@ void I8080::execOpcode(uint8_t opcode) {
         case 0xd3: { // OUT
             uint8_t port = readMem(pc);
             pc++;
-            outPort(this, port);
+            if (outPort) {
+                outPort(this, port);
+            }
             break;
         }
         case 0xd4: call(carry == false); break;
@@ -362,7 +364,9 @@ void I8080::execOpcode(uint8_t opcode) {
         case 0xdb: { // IN
             uint8_t port = readMem(pc);
             pc++;
-            inPort(this, port);
+            if (inPort) {
+                inPort(this, port);
+            }
             break;
         }
         case 0xdc: call(carry == true); break;

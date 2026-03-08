@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <array>
+#include <functional>
 
 static const uint8_t OPCODES_CYCLES[256] = {
 //  0  1   2   3   4   5   6   7   8  9   A   B   C   D   E  F
@@ -61,9 +62,9 @@ struct I8080 {
     void jmp(bool condition);
     void call(uint16_t addr);
     void call(bool condition);
-    void (*inPort) (I8080*, uint8_t);
-    void (*outPort) (I8080*, uint8_t);
-    void setPorts(void (*in) (I8080*, uint8_t), void (*out) (I8080*, uint8_t));
+    std::function<void(I8080*, uint8_t)> inPort;
+    std::function<void(I8080*, uint8_t)> outPort;
+    void setPorts(std::function<void(I8080*, uint8_t)> in, std::function<void(I8080*, uint8_t)> out);
 
     void requestInterrupt(uint8_t opcode);
     
@@ -302,9 +303,9 @@ inline void I8080::requestInterrupt(uint8_t opcode) {
     interruptOpcode = opcode;
 }
 
-inline void I8080::setPorts(void (*in) (I8080*, uint8_t), void (*out) (I8080*, uint8_t)) {
-    inPort = in;
-    outPort = out;
+inline void I8080::setPorts(std::function<void(I8080*, uint8_t)> in, std::function<void(I8080*, uint8_t)> out) {
+    inPort = std::move(in);
+    outPort = std::move(out);
 }
 
 #endif

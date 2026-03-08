@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <SDL2/SDL.h>
 
 #include "../I8080.h"
 
@@ -7,6 +8,7 @@
 
 #define DISPLAY_WIDTH 224
 #define DISPLAY_HEIGHT 256
+#define SCALE 3
 
 #define INVADERS_H_ADDR 0x0000
 #define INVADERS_G_ADDR 0x0800
@@ -27,6 +29,14 @@ struct Space {
     uint8_t port1 = 0, port2 = 0;
     uint8_t display[DISPLAY_HEIGHT][DISPLAY_WIDTH] = {0};
     I8080* i8080 = nullptr;
+
+    // SDL stuff
+    SDL_Window* window;
+    SDL_Renderer* renderer;
+    SDL_Texture* texture;
+    uint8_t SDL_init();
+    void SDL_loop();
+    void SDL_close();
 };
 
 #endif

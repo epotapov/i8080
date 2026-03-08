@@ -1,14 +1,22 @@
 #include <cstdint>
 #include <iostream>
+#include <SDL2/SDL.h>
 
 #include "space-invaders.h"
 
 Space::Space() {
-    
+    i8080 = new I8080(MEMORY_SIZE, INVADERS_H_ADDR, "roms/invaders.h");
+    i8080->writeRom(INVADERS_G_ADDR, "roms/invaders.g");
+    i8080->writeRom(INVADERS_F_ADDR, "roms/invaders.f");
+    i8080->writeRom(INVADERS_E_ADDR, "roms/invaders.e");
+    i8080->setPorts(
+        [this] (I8080* cpu, uint8_t port) { inPort(cpu, port); },
+        [this] (I8080* cpu, uint8_t port) { outPort(cpu, port); }
+    );
 }
 
 Space::~Space() {
-    
+    delete i8080;
 }
 
 void Space::inPort(I8080* i8080, uint8_t port) {
@@ -50,7 +58,85 @@ void Space::outPort(I8080* i8080, uint8_t port) {
     }
 }
 
+uint8_t Space::SDL_init() {
+    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+        std::cerr << "SDL_Init failed: " << SDL_GetError() << "\n";
+        return 1;
+    }
+
+    window = SDL_CreateWindow(
+        "Space Invaders",
+        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        DISPLAY_WIDTH * SCALE, DISPLAY_HEIGHT * SCALE,
+        SDL_WINDOW_SHOWN
+    );
+
+    if (!window) {
+        std::cerr << "SDL_CreateWindow failed: " << SDL_GetError() << "\n";
+        SDL_Quit();
+        return 1;
+    }
+
+    renderer = SDL_CreateRenderer(
+        window, 1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC
+    );
+
+    if (!renderer) {
+        std::cerr << "SDL_CreateRenderer failed: " << SDL_GetError() << "\n";
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }
+
+    texture = SDL_CreateTexture(
+        renderer, SDL_PIXELFORMAT_RGBA32,
+        SDL_TEXTUREACCESS_STREAMING, DISPLAY_WIDTH, DISPLAY_HEIGHT
+    );
+
+    if (!renderer) {
+        std::cerr << "SDL_CreateTexture failed: " << SDL_GetError() << "\n";
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }
+
+    return 0;
+}
+
+void Space::SDL_loop() {
+    SDL_Event event;
+    bool running = true;
+
+    while (running) {
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                running = false;
+            }
+        }
+
+        // Render
+
+
+    }
+}
+
+void Space::SDL_close() {
+    SDL_DestroyTexture(texture);
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+}
+
 int main(int argc, char** argv) {
-    std::cout << "Space Invaders\n";
+    Space space;
+
+    uint8_t fail = space.SDL_init();
+
+    if (fail) {
+        return 1;
+    }
+
+    space.SDL_loop();
+    space.SDL_close();
     return 0;
 }
