@@ -16,6 +16,11 @@
 #define INVADERS_E_ADDR 0x1800
 
 #define MEMORY_SIZE 0x4000
+#define FPS 59.541985
+#define CLOCK_SPEED 1996800
+#define CYCLES_PER_FRAME (CLOCK_SPEED / FPS)
+
+#define VRAM_ADDR 0x2400
 
 struct Space {
     Space();
@@ -24,10 +29,13 @@ struct Space {
     void inPort(I8080* i8080, uint8_t port);
     void outPort(I8080* i8080, uint8_t port);
 
+    void drawDisplay();
+    void runGame(uint32_t ms);
+
     uint16_t shiftWord = 0;
     uint8_t shiftOffset = 0;
     uint8_t port1 = 0, port2 = 0;
-    uint8_t display[DISPLAY_HEIGHT][DISPLAY_WIDTH] = {0};
+    uint8_t display[DISPLAY_HEIGHT][DISPLAY_WIDTH][4] = {0};
     I8080* i8080 = nullptr;
 
     // SDL stuff
@@ -37,6 +45,7 @@ struct Space {
     uint8_t SDL_init();
     void SDL_loop();
     void SDL_close();
+    bool processInput(SDL_Event* event);
 };
 
 #endif

@@ -112,6 +112,9 @@ void Space::SDL_loop() {
             if (event.type == SDL_QUIT) {
                 running = false;
             }
+            else {
+                running = processInput(&event);
+            }
         }
 
         // Render
@@ -120,11 +123,133 @@ void Space::SDL_loop() {
     }
 }
 
+bool Space::processInput(SDL_Event* event) {
+    switch (event->type) {
+        case SDL_KEYDOWN: {
+            switch (event->key.keysym.sym) {
+                case SDLK_ESCAPE:
+                    return false;
+                case SDLK_c:
+                    // coin
+                    port1 |= 0x1;
+                    break;
+                case SDLK_s:
+                    // Start 1p
+                    port1 |= 1 << 2;
+                    break;
+                case SDLK_DOWN:
+                    // Start 2p
+                    port1 |= 1 << 1;
+                    break;
+                case SDLK_w:
+                    // Shoot 1p
+                    port1 |= 1 << 4;
+                    break;
+                case SDLK_UP:
+                    // Shoot 2p
+                    port2 |= 1 << 4;
+                    break;
+                case SDLK_a:
+                    // Left 1p
+                    port1 |= 1 << 5;
+                    break;
+                case SDLK_LEFT:
+                    // Left 2p
+                    port2 |= 1 << 5;
+                    break;
+                case SDLK_d:
+                    // Right 1p
+                    port1 |= 1 << 6;
+                    break;
+                case SDLK_RIGHT:
+                    // Right 2p
+                    port2 |= 1 << 6;
+                    break;
+                case SDLK_t:
+                    // Tilt
+                    port2 |= 1 << 2;
+                    break;
+                default:
+                    break;
+            }
+        } break;
+        case SDL_KEYUP: {
+            switch (event->key.keysym.sym) {
+                case SDLK_ESCAPE:
+                    return false;
+                case SDLK_c:
+                    // coin
+                    port1 &= 0b11111110;
+                    break;
+                case SDLK_s:
+                    // Start 1p
+                    port1 &= 0b11111011;
+                    break;
+                case SDLK_DOWN:
+                    // Start 2p
+                    port1 &= 0b11111101;
+                    break;
+                case SDLK_w:
+                    // Shoot 1p
+                    port1 &= 0b11101111;
+                    break;
+                case SDLK_UP:
+                    // Shoot 2p
+                    port2 &= 0b11101111;
+                    break;
+                case SDLK_a:
+                    // Left 1p
+                    port1 &= 0b11011111;
+                    break;
+                case SDLK_LEFT:
+                    // Left 2p
+                    port2 &= 0b11011111;
+                    break;
+                case SDLK_d:
+                    // Right 1p
+                    port1 &= 0b10111111;
+                    break;
+                case SDLK_RIGHT:
+                    // Right 2p
+                    port2 &= 0b10111111;
+                    break;
+                case SDLK_t:
+                    // Tilt
+                    port2 &= 0b11111011;
+                    break;
+                default:
+                    break;
+            }
+        } break;
+    }
+    return true;
+}
+
 void Space::SDL_close() {
     SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
+}
+
+void Space::runGame(uint32_t ms) {
+    int numCycles = 0;
+
+    while (numCycles < ms * CLOCK_SPEED / 1000) {
+        uint64_t origCycle = i8080->cycle;
+
+        i8080->nextInstruction();
+        uint64_t changeCycle = i8080->cycle - origCycle;
+        numCycles += changeCycle;
+
+        if (i8080->cycle >= CYCLES_PER_FRAME / 2) {
+            i8080->cycle -= CYCLES_PER_FRAME / 2;
+        }
+    }
+}
+
+void Space::drawDisplay() {
+    
 }
 
 int main(int argc, char** argv) {
