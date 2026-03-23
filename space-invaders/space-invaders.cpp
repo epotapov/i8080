@@ -93,7 +93,7 @@ uint8_t Space::SDL_init() {
         SDL_TEXTUREACCESS_STREAMING, DISPLAY_WIDTH, DISPLAY_HEIGHT
     );
 
-    if (!renderer) {
+    if (!texture) {
         std::cerr << "SDL_CreateTexture failed: " << SDL_GetError() << "\n";
         SDL_DestroyWindow(window);
         SDL_Quit();
@@ -106,8 +106,13 @@ uint8_t Space::SDL_init() {
 void Space::SDL_loop() {
     SDL_Event event;
     bool running = true;
+    uint32_t current_time = 0;
+    uint32_t last_time = 0;
+    uint32_t dt = 0;
 
     while (running) {
+        current_time = SDL_GetTicks();
+        dt = current_time - last_time;
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 running = false;
@@ -118,8 +123,9 @@ void Space::SDL_loop() {
         }
 
         // Render
+        runGame(dt);
 
-
+        last_time = current_time;
     }
 }
 
@@ -221,6 +227,8 @@ bool Space::processInput(SDL_Event* event) {
                     break;
             }
         } break;
+        default:
+            break;
     }
     return true;
 }
@@ -244,12 +252,57 @@ void Space::runGame(uint32_t ms) {
 
         if (i8080->cycle >= CYCLES_PER_FRAME / 2) {
             i8080->cycle -= CYCLES_PER_FRAME / 2;
+            i8080->requestInterrupt(interrupt);
+
+            if (interrupt == 0xd7) {
+                drawDisplay();
+            }
+
+            if (interrupt == 0xcf) {
+                interrupt = 0xd7;
+            }
+            else {
+                interrupt = 0xcf;
+            }
         }
     }
 }
 
 void Space::drawDisplay() {
-    
+    for (uint32_t i = 0; i < (DISPLAY_HEIGHT * DISPLAY_WIDTH) / 8; ++i) {
+        const uint32_t y = i * 8 / 256;
+        const uint32_t base_x = (i * 8) % 256;
+
+        const uint8_t byte = i8080->memory[VRAM_ADDR + i];
+
+        for (uint8_t bit = 0; bit < 8; ++bit) {
+            int px = base_x + bit;
+            int py = y;
+            const bool pixelOn = (byte >> bit) & 1;
+
+            uint8_t r = 0, g = 0, b = 0;
+
+            if (pixelOn) {
+                r = 255;
+                g = 255;
+                b = 255;
+            }
+
+            uint32_t temp = px;
+            px = py;
+            py = -temp + DISPLAY_HEIGHT - 1;
+
+            display[py][px][0] = r;
+            display[py][px][1] = g;
+            display[py][px][2] = b;
+            display[py][px][3] = 255;
+        }
+    }
+
+    SDL_UpdateTexture(texture, nullptr, &display[0][0][0], DISPLAY_WIDTH * 4);
+    SDL_RenderClear(renderer);
+    SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+    SDL_RenderPresent(renderer);
 }
 
 int main(int argc, char** argv) {

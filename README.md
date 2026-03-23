@@ -15,7 +15,7 @@ To run the tests:
     ./build/I8080
 
 ## Basic Interpreter
-Runs Altair Basic for Altair 8800 4k edition. You can grab the rom here and place it in a rom directory in this project.
+Runs Altair Basic for Altair 8800 4k edition (4kbas40.bin). You can grab the rom [here](https://deramp.com/downloads/mfe_archive/010-S100%20Computers%20and%20Boards/00-MITS/40-Software/BASIC/Altair%20BASIC%204.0/Binaries/) and place it in a rom directory in this project.
 
 To build the Basic emulator build the following:
 

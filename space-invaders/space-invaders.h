@@ -37,6 +37,7 @@ struct Space {
     uint8_t port1 = 0, port2 = 0;
     uint8_t display[DISPLAY_HEIGHT][DISPLAY_WIDTH][4] = {0};
     I8080* i8080 = nullptr;
+    uint8_t interrupt = 0xcf;
 
     // SDL stuff
     SDL_Window* window;
