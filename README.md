@@ -50,3 +50,26 @@ To build the Space Invaders emulator build the following:
 To run the Space Invaders emulator run:
 
     ./build/space-invaders
+
+Place the Space Invaders ROMs in the roms folder.
+
+    invaders.e
+    invaders.f
+    invaders.g
+    invaders.h
+
+Controls:
+
+| Key          | Action         |
+| ------------ | -------------- |
+| C            | Insert Coin    |
+| S            | Start 1P       |
+| Down Arrow   | Start 2P       |
+| W            | Shoot 1P       |
+| Up Arrow     | Shoot 2P       |
+| A            | Move Left 1P   |
+| Left Arrow   | Move Left 2P   |
+| D            | Move Right 1P  |
+| Right Arrow  | Move Right 2P  |
+| T            | Tilt           |
+| Esc          | Quit           |
