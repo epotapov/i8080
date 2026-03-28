@@ -19,6 +19,10 @@ Space::~Space() {
     delete i8080;
 }
 
+void Space::initAudio(const char *file) {
+    
+}
+
 void Space::inPort(I8080* i8080, uint8_t port) {
     switch (port)
     {
@@ -283,9 +287,23 @@ void Space::drawDisplay() {
             uint8_t r = 0, g = 0, b = 0;
 
             if (pixelOn) {
-                r = 255;
-                g = 255;
-                b = 255;
+                if (px < 16) {
+                    if (py < 16 || py > 118 + 16) {
+                        r = 255;
+                        g = 255;
+                        b = 255;
+                    } else {
+                        g = 255;
+                    }
+                } else if (px >= 16 && px <= 16 + 56) {
+                    g = 255;
+                } else if (px >= 16 + 56 + 120 && px < 16 + 56 + 120 + 32) {
+                    r = 255;
+                } else {
+                    r = 255;
+                    g = 255;
+                    b = 255;
+                }
             }
 
             uint32_t temp = px;

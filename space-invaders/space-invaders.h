@@ -46,6 +46,7 @@ struct Space {
     uint8_t SDL_init();
     void SDL_loop();
     void SDL_close();
+    void initAudio(const char *file);
     bool processInput(SDL_Event* event);
 };
 
