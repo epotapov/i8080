@@ -1,6 +1,6 @@
 #include <cstdint>
 #include <iostream>
-#include <SDL2/SDL.h>
+#include <raylib.h>
 
 #include "space-invaders.h"
 
@@ -19,8 +19,66 @@ Space::~Space() {
     delete i8080;
 }
 
-void Space::initAudio(const char *file) {
-    
+void Space::Ray_initAudio() {
+    InitAudioDevice();
+
+    if (IsAudioDeviceReady()) {
+        audioInitialized = true;
+        // Load sounds
+        ufoHitSound = LoadSound("audio/0.wav");
+        shootSound = LoadSound("audio/1.wav");
+        playerDieSound = LoadSound("audio/2.wav");
+        alienDieSound = LoadSound("audio/3.wav");
+        alienMove1 = LoadSound("audio/4.wav");
+        alienMove2 = LoadSound("audio/5.wav");
+        alienMove3 = LoadSound("audio/6.wav");
+        alienMove4 = LoadSound("audio/7.wav");
+        ufoSound = LoadSound("audio/8.wav");
+    }
+}
+
+void Space::Ray_playAudio(bool bank) {
+    if (!audioInitialized) return;
+
+    uint8_t data = i8080->a;
+
+    if (bank) {
+        if (data != lastPort3) {
+            if ((data & 0x1) && !(lastPort3 & 0x1)) {
+                PlaySound(ufoHitSound);
+            }
+            if ((data & 0x2) && !(lastPort3 & 0x2)) {
+                PlaySound(shootSound);
+            }
+            if ((data & 0x4) && !(lastPort3 & 0x4)) {
+                PlaySound(playerDieSound);
+            }
+            if ((data & 0x8) && !(lastPort3 & 0x8)) {
+                PlaySound(alienDieSound);
+            }
+            lastPort3 = data;
+        }
+    }
+    else {
+        if (data != lastPort5) {
+            if ((data & 0x1) && !(lastPort5 & 0x1)) {
+                PlaySound(alienMove1);
+            }
+            if ((data & 0x2) && !(lastPort5 & 0x2)) {
+                PlaySound(alienMove2);
+            }
+            if ((data & 0x4) && !(lastPort5 & 0x4)) {
+                PlaySound(alienMove3);
+            }
+            if ((data & 0x8) && !(lastPort5 & 0x8)) {
+                PlaySound(alienMove4);
+            }
+            if ((data & 0x10) && !(lastPort5 & 0x10)) {
+                PlaySound(ufoSound);
+            }
+            lastPort5 = data;
+        }
+    }
 }
 
 void Space::inPort(I8080* i8080, uint8_t port) {
@@ -49,11 +107,13 @@ void Space::outPort(I8080* i8080, uint8_t port) {
             shiftOffset = i8080->a & 0x7;
             break;
         case 3: // Sound
+            Ray_playAudio(true);
             break;
         case 4:
             shiftWord = (i8080->a << 8) | (shiftWord >> 8);
             break;
         case 5: // Sound
+            Ray_playAudio(false);
             break;
         case 6: // Watchdog
             break;
@@ -62,186 +122,143 @@ void Space::outPort(I8080* i8080, uint8_t port) {
     }
 }
 
-uint8_t Space::SDL_init() {
-    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-        std::cerr << "SDL_Init failed: " << SDL_GetError() << "\n";
-        return 1;
-    }
+void Space::Ray_init() {
+    InitWindow(DISPLAY_WIDTH * SCALE, DISPLAY_HEIGHT * SCALE, "Space Invaders");
+    SetTargetFPS(60);
 
-    window = SDL_CreateWindow(
-        "Space Invaders",
-        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        DISPLAY_WIDTH * SCALE, DISPLAY_HEIGHT * SCALE,
-        SDL_WINDOW_SHOWN
-    );
-
-    if (!window) {
-        std::cerr << "SDL_CreateWindow failed: " << SDL_GetError() << "\n";
-        SDL_Quit();
-        return 1;
-    }
-
-    renderer = SDL_CreateRenderer(
-        window, 1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC
-    );
-
-    if (!renderer) {
-        std::cerr << "SDL_CreateRenderer failed: " << SDL_GetError() << "\n";
-        SDL_DestroyWindow(window);
-        SDL_Quit();
-        return 1;
-    }
-
-    texture = SDL_CreateTexture(
-        renderer, SDL_PIXELFORMAT_RGBA32,
-        SDL_TEXTUREACCESS_STREAMING, DISPLAY_WIDTH, DISPLAY_HEIGHT
-    );
-
-    if (!texture) {
-        std::cerr << "SDL_CreateTexture failed: " << SDL_GetError() << "\n";
-        SDL_DestroyWindow(window);
-        SDL_Quit();
-        return 1;
-    }
-
-    return 0;
+    Image img = GenImageColor(DISPLAY_WIDTH, DISPLAY_HEIGHT, BLACK);
+    texture = LoadTextureFromImage(img);
+    UnloadImage(img);
 }
 
-void Space::SDL_loop() {
-    SDL_Event event;
+void Space::Ray_loop() {
     bool running = true;
-    uint32_t current_time = 0;
-    uint32_t last_time = 0;
     uint32_t dt = 0;
 
-    while (running) {
-        current_time = SDL_GetTicks();
-        dt = current_time - last_time;
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) {
-                running = false;
-            }
-            else {
-                running = processInput(&event);
-            }
-        }
+    while (!WindowShouldClose() && running) {
+        float dtf = GetFrameTime();
+        dt = (uint32_t)(dtf * 1000.0f);
+
+        running = processInput();
 
         // Render
         runGame(dt);
 
-        last_time = current_time;
+        BeginDrawing();
+            ClearBackground(BLACK);
+            DrawTextureEx(texture, (Vector2) {0, 0}, 0.0f, (float) SCALE, WHITE);
+        EndDrawing();
     }
 }
 
-bool Space::processInput(SDL_Event* event) {
-    switch (event->type) {
-        case SDL_KEYDOWN: {
-            switch (event->key.keysym.sym) {
-                case SDLK_ESCAPE:
-                    return false;
-                case SDLK_c:
-                    // coin
-                    port1 |= 0x1;
-                    break;
-                case SDLK_s:
-                    // Start 1p
-                    port1 |= 1 << 2;
-                    break;
-                case SDLK_DOWN:
-                    // Start 2p
-                    port1 |= 1 << 1;
-                    break;
-                case SDLK_w:
-                    // Shoot 1p
-                    port1 |= 1 << 4;
-                    break;
-                case SDLK_UP:
-                    // Shoot 2p
-                    port2 |= 1 << 4;
-                    break;
-                case SDLK_a:
-                    // Left 1p
-                    port1 |= 1 << 5;
-                    break;
-                case SDLK_LEFT:
-                    // Left 2p
-                    port2 |= 1 << 5;
-                    break;
-                case SDLK_d:
-                    // Right 1p
-                    port1 |= 1 << 6;
-                    break;
-                case SDLK_RIGHT:
-                    // Right 2p
-                    port2 |= 1 << 6;
-                    break;
-                case SDLK_t:
-                    // Tilt
-                    port2 |= 1 << 2;
-                    break;
-                default:
-                    break;
-            }
-        } break;
-        case SDL_KEYUP: {
-            switch (event->key.keysym.sym) {
-                case SDLK_ESCAPE:
-                    return false;
-                case SDLK_c:
-                    // coin
-                    port1 &= 0b11111110;
-                    break;
-                case SDLK_s:
-                    // Start 1p
-                    port1 &= 0b11111011;
-                    break;
-                case SDLK_DOWN:
-                    // Start 2p
-                    port1 &= 0b11111101;
-                    break;
-                case SDLK_w:
-                    // Shoot 1p
-                    port1 &= 0b11101111;
-                    break;
-                case SDLK_UP:
-                    // Shoot 2p
-                    port2 &= 0b11101111;
-                    break;
-                case SDLK_a:
-                    // Left 1p
-                    port1 &= 0b11011111;
-                    break;
-                case SDLK_LEFT:
-                    // Left 2p
-                    port2 &= 0b11011111;
-                    break;
-                case SDLK_d:
-                    // Right 1p
-                    port1 &= 0b10111111;
-                    break;
-                case SDLK_RIGHT:
-                    // Right 2p
-                    port2 &= 0b10111111;
-                    break;
-                case SDLK_t:
-                    // Tilt
-                    port2 &= 0b11111011;
-                    break;
-                default:
-                    break;
-            }
-        } break;
-        default:
-            break;
+bool Space::processInput() {
+    // exit
+    if (IsKeyPressed(KEY_ESCAPE)) {
+        return false;
     }
+
+    // coin
+    if (IsKeyDown(KEY_C)) {
+        port1 |= 0x1;
+    }
+    else {
+        port1 &= 0b11111110;
+    }
+
+    // Start 1p
+    if (IsKeyDown(KEY_S)) {
+        port1 |= 1 << 2;
+    }
+    else {
+        port1 &= 0b11111011;
+    }
+
+    // Start 2p
+    if (IsKeyDown(KEY_DOWN)) {
+        port1 |= 1 << 1;
+    }
+    else {
+        port1 &= 0b11111101;
+    }
+
+    // Shoot 1p
+    if (IsKeyDown(KEY_W)) {
+        port1 |= 1 << 4;
+    }
+    else {
+        port1 &= 0b11101111;
+    }
+
+    // Shoot 2p
+    if (IsKeyDown(KEY_UP)) {
+        port2 |= 1 << 4;
+    }
+    else {
+        port2 &= 0b11101111;
+    }
+
+
+    // Left 1p
+    if (IsKeyDown(KEY_A)) {
+        port1 |= 1 << 5;
+    }
+    else {
+        port1 &= 0b11011111;
+    }
+
+    // Left 2p
+    if (IsKeyDown(KEY_LEFT)) {
+        port2 |= 1 << 5;
+    }
+    else {
+        port2 &= 0b11011111;
+    }
+
+    // Right 1p
+    if (IsKeyDown(KEY_D)) {
+        port1 |= 1 << 6;
+    }
+    else {
+        port1 &= 0b10111111;
+    }
+
+    // Right 2p
+    if (IsKeyDown(KEY_RIGHT)) {
+        port2 |= 1 << 6;
+    }
+    else {
+        port2 &= 0b10111111;
+    }
+
+    // Tilt
+    if (IsKeyDown(KEY_T)) {
+        port2 |= 1 << 2;
+    }
+    else {
+        port2 &= 0b11111011;
+    }
+
     return true;
 }
 
-void Space::SDL_close() {
-    SDL_DestroyTexture(texture);
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
+void Space::Ray_close() {
+    UnloadTexture(texture);
+
+    // Unload Sounds if audio was initialized
+    if (audioInitialized) {
+        UnloadSound(ufoSound);
+        UnloadSound(shootSound);
+        UnloadSound(playerDieSound);
+        UnloadSound(alienDieSound);
+        UnloadSound(alienMove1);
+        UnloadSound(alienMove2);
+        UnloadSound(alienMove3);
+        UnloadSound(alienMove4);
+        UnloadSound(ufoHitSound);
+
+        CloseAudioDevice();
+    }
+    CloseWindow();
 }
 
 void Space::runGame(uint32_t ms) {
@@ -317,22 +334,16 @@ void Space::drawDisplay() {
         }
     }
 
-    SDL_UpdateTexture(texture, nullptr, &display[0][0][0], DISPLAY_WIDTH * 4);
-    SDL_RenderClear(renderer);
-    SDL_RenderCopy(renderer, texture, nullptr, nullptr);
-    SDL_RenderPresent(renderer);
+    UpdateTexture(texture, &display[0][0][0]);
 }
 
 int main(int argc, char** argv) {
     Space space;
 
-    uint8_t fail = space.SDL_init();
+    space.Ray_init();
+    space.Ray_initAudio();
 
-    if (fail) {
-        return 1;
-    }
-
-    space.SDL_loop();
-    space.SDL_close();
+    space.Ray_loop();
+    space.Ray_close();
     return 0;
 }

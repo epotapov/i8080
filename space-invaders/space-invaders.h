@@ -1,5 +1,5 @@
 #include <cstdint>
-#include <SDL2/SDL.h>
+#include <raylib.h>
 
 #include "../I8080.h"
 
@@ -39,15 +39,27 @@ struct Space {
     I8080* i8080 = nullptr;
     uint8_t interrupt = 0xcf;
 
-    // SDL stuff
-    SDL_Window* window;
-    SDL_Renderer* renderer;
-    SDL_Texture* texture;
-    uint8_t SDL_init();
-    void SDL_loop();
-    void SDL_close();
-    void initAudio(const char *file);
-    bool processInput(SDL_Event* event);
+    uint8_t lastPort3 = 0;
+    uint8_t lastPort5 = 0;
+
+    // raylib stuff
+    Texture2D texture;
+    Sound ufoHitSound;
+    Sound shootSound;
+    Sound playerDieSound;
+    Sound alienDieSound;
+    Sound alienMove1;
+    Sound alienMove2;
+    Sound alienMove3;
+    Sound alienMove4;
+    Sound ufoSound;
+    bool audioInitialized = false;
+    void Ray_init();
+    void Ray_loop();
+    void Ray_close();
+    void Ray_initAudio();
+    void Ray_playAudio(bool bank);
+    bool processInput();
 };
 
 #endif

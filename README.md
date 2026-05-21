@@ -43,13 +43,9 @@ OK
 ## Space Invaders
 
 
-To build the Space Invaders emulator build the following:
+To build the Space Invaders emulator build the following (make sure your system has raylib):
 
     make space
-
-To run the Space Invaders emulator run:
-
-    ./build/space-invaders
 
 Place the Space Invaders ROMs in the roms folder.
 
@@ -57,6 +53,14 @@ Place the Space Invaders ROMs in the roms folder.
     invaders.f
     invaders.g
     invaders.h
+
+Place the Space Invaders WAVs in the audio folder.
+
+    0.wav, 1.wav, 2.wav, 3.wav, 4.wav, 5.wav, 6.wav, 7.wav, 8.wav
+
+To run the Space Invaders emulator run:
+
+    ./build/space-invaders
 
 Controls:
 
